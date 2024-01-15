@@ -1,0 +1,6 @@
+
+# crear la bd apirest
+# ejecutar la apirest en laravel 
+#https://github.com/infodp/apirest_crud_laravel8
+#cd C:\laragon\www\apirest
+# php artisan serve

@@ -1,0 +1,314 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <title>Vuetify</title>
+  <link rel="icon" href="vuetify.ico" type="image/x-icon">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, minimal-ui">
+  <link href="https://fonts.googleapis.com/css?family=Roboto:100,300,400,500,700,900" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/@mdi/font@5.x/css/materialdesignicons.min.css" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/vuetify@2.x/dist/vuetify.min.css" rel="stylesheet">
+
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/limonte-sweetalert2/11.4.0/sweetalert2.min.css"
+    integrity="sha512-y4S4cBeErz9ykN3iwUC4kmP/Ca+zd8n8FDzlVbq5Nr73gn1VBXZhpriQ7avR+8fQLpyq4izWm0b8s6q4Vedb9w=="
+    crossorigin="anonymous" referrerpolicy="no-referrer" />
+  <!--link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11.0.19/dist/sweetalert2.min.css"-->
+
+  <style>
+    #app {
+      background: #7F7FD5;
+      /* fallback for old browsers */
+      background: -webkit-linear-gradient(to right, #91EAE4, #86A8E7, #7F7FD5);
+      /* Chrome 10-25, Safari 5.1-6 */
+      background: linear-gradient(to right, #91EAE4, #86A8E7, #7F7FD5);
+      /* W3C, IE 10+/ Edge, Firefox 16+, Chrome 26+, Opera 12+, Safari 7+ */
+    }
+
+    #background-color: #74ebd5;
+  </style>
+</head>
+
+<body>
+  <div id="app">
+    <v-app>
+      <v-main>
+        <!--<h2 class="text-center">CRUD usando APIREST con Node JS</h2>-->
+        <template>
+          <v-toolbar color="blue darken-2" dark>
+            <v-toolbar-title class="white--text">
+              <v-icon class="mr-2">mdi-clock-outline</v-icon> Gestor de Articulos
+            </v-toolbar-title>
+            <v-divider class="mx-4" inset vertical></v-divider>
+            <v-spacer></v-spacer>
+            <!-- Otros elementos de la barra de herramientas aquí -->
+          </v-toolbar>
+        </template>
+        <!-- Botón CREAR -->
+        <v-flex class="text-center align-center">
+          <v-btn class="mx-2 mt-4" fab dark color="green darken-2" @click="mostrarDialogo()"><v-icon
+              dark>mdi-plus</v-icon></v-btn>
+        </v-flex>
+
+        <!-- Barra de búsqueda  -->
+        <!--v-col cols="6" sm="6" text-center align-center>
+           <v-text-field v-model="search" append-icon="search" label="Buscar" single-line hide-details></v-text-field>
+        </v-col-->
+
+        <v-card class="rounded mx-auto mt-5" color="transparent" max-width="1280" elevation="8">
+          <!-- Tabla y formulario -->
+          <v-simple-table v-if="articulos.length > 0" class="mt-5">
+            <template v-slot:default>
+              <thead>
+                <tr class="indigo darken-4">
+                  <th class="white--text">NO.</th>
+                  <th class="white--text">DESCRIPCION</th>
+                  <th class="white--text">PRECIO</th>
+                  <th class="white--text">STOCK</th>
+                  <th class="white--text text-center">ACCIONES</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr v-for="(articulo, index) in paginatedArticulos" :key="articulo.id">
+                  <td>{{ startIndex + index + 1 }}</td>
+                  <td class="xs12 md6">{{ articulo.descripcion }}</td>
+                  <td class="xs12 md6"> Q. {{ articulo.precio.toFixed(2) }}</td>
+                  <td class="xs12 md6">{{ articulo.stock }} &nbsp;&nbsp;<b></td>
+                  <td class="xs12 md6 text-center">
+                    <v-btn fab dark small class="ma-1" color="#00BCD4"
+                      @click="mostrarDialogo(articulo.id, articulo.descripcion, articulo.precio, articulo.stock)">
+                      <v-icon>mdi-pencil</v-icon>
+                    </v-btn>
+                    <v-btn fab dark small class="ma-1" color="#E53935" @click="borrar(articulo.id)">
+                      <v-icon>mdi-delete</v-icon>
+                    </v-btn>
+                  </td>
+                </tr>
+              </tbody>
+            </template>
+          </v-simple-table>
+          <div v-else>
+            <h5 class="text-center">No hay registros para mostrar.</h5>
+          </div>
+        </v-card>
+        <!-- Componente de Diálogo para CREAR y EDITAR -->
+        <v-dialog v-model="dialog" max-width="500">
+          <v-card>
+            <v-card-title class="blue darken-2 white--text">{{ dialogTitle }}</v-card-title>
+            <v-card-text>
+              <v-form ref="form">
+                <v-container>
+                  <v-row>
+                    <input v-model="articulo.id" hidden></input>
+                    <v-col cols="12" md="4">
+                      <v-text-field v-model="articulo.descripcion" label="Descripción" solo :rules="descripcionRules"
+                        required>{{articulo.descripcion}}</v-text-field>
+                    </v-col>
+                    <v-col cols="12" md="4">
+                      <v-text-field v-model="articulo.precio" label="Precio" type="number" prefix="Q" solo
+                        :rules="precioRules" required></v-text-field>
+                    </v-col>
+                    <v-col cols="12" md="4">
+                      <v-text-field v-model="articulo.stock" label="Stock" type="number" solo :rules="stockRules"
+                        required></v-text-field>
+                    </v-col>
+                  </v-row>
+                </v-container>
+            </v-card-text>
+            <v-card-actions>
+              <v-spacer></v-spacer>
+              <v-btn @click="dialog=false" color="blue-grey" dark>Cancelar</v-btn>
+              <v-btn @click="guardar()" type="submit" color="blue darken-2" dark>Guardar</v-btn>
+            </v-card-actions>
+            </v-form>
+          </v-card>
+        </v-dialog>
+        <v-pagination v-if="totalPages > 1" v-model="currentPage" :length="totalPages"></v-pagination><br>
+        <div id="error-message"
+          style="display: none; background-color: #FF5252; color: white; padding: 10px; border-radius: 8px; box-shadow: 0px 2px 4px rgba(0, 0, 0, 0.1); max-width: 400px; margin: 0 auto;">
+          ¡Lo sentimos, la API no está disponible en este momento!
+        </div>
+      </v-main>
+    </v-app>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/vue@2.x/dist/vue.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/vuetify/2.5.7/vuetify.min.js"
+    integrity="sha512-BPXn+V2iK/Zu6fOm3WiAdC1pv9uneSxCCFsJHg8Cs3PEq6BGRpWgXL+EkVylCnl8FpJNNNqvY+yTMQRi4JIfZA=="
+    crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/axios/0.21.1/axios.min.js"
+    integrity="sha512-bZS47S7sPOxkjU/4Bt0zrhEtWx0y0CRkhEp8IckzK+ltifIIE9EMIMTuT/mEzoIMewUINruDBIR/jJnbguonqQ=="
+    crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+
+  <!--script src="//cdn.jsdelivr.net/npm/sweetalert2@11"></script-->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/limonte-sweetalert2/11.4.0/sweetalert2.js"
+    integrity="sha512-3UUOb5j6zHTsx9k8oJ5XHogT2u2miftt8NVKnOICV9Iz6x/WIgJurczwfOVcEZUHWqrBSp0vkc+ZMKfHRd2p2A=="
+    crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+
+  <script>
+    let url = 'http://localhost:8000/api/articulos/';
+
+    new Vue({
+      el: '#app',
+      vuetify: new Vuetify(),
+      data() {
+        return {
+          currentPage: 1, // Página actual
+          itemsPerPage: 8, // Ítems por página		
+          articulos: [],
+          dialog: false,
+          operacion: '',
+          articulo: {
+            id: null,
+            descripcion: '',
+            precio: '',
+            stock: ''
+          },
+          descripcionRules: [v => !!v || 'La descripción es requerida'],
+          precioRules: [v => !!v || 'El precio es requerido'],
+          //stockRules: [v => !!v || 'El stock es requerido'],
+          stockRules: [
+            v => !!v || 'El stock es requerido',
+            v => (v === '' || parseFloat(v) >= 0) || 'El stock no puede ser negativo',
+          ],
+        }
+      },
+      created() {
+        this.verificarDisponibilidadAPI();
+        this.mostrar()
+      },
+      methods: {
+
+        verificarDisponibilidadAPI: function () {
+          axios.get(url)
+            .then(response => {
+              // La API está disponible, realizar acciones normales
+              this.mostrar();
+            })
+            .catch(error => {
+              // La API no está disponible, mostrar el mensaje de error
+              console.error('La API no está disponible:', error);
+              const errorMessageElement = document.getElementById('error-message');
+              errorMessageElement.style.display = 'block';
+            });
+        },
+        //MÉTODOS PARA EL CRUD
+        mostrar: function () {
+          axios.get(url)
+            .then(response => {
+              this.articulos = response.data;
+            })
+        },
+        crear: function () {
+          let parametros = { descripcion: this.articulo.descripcion, precio: this.articulo.precio, stock: this.articulo.stock };
+          axios.post(url, parametros)
+            .then(response => {
+              Swal.fire({
+                title: 'Éxito',
+                text: 'El artículo se ha agregado exitosamente.',
+                icon: 'success',
+                timer: 2500, // 2 segundos
+                //showConfirmButton: false // Oculta el botón OK
+              });
+              this.mostrar();
+              this.articulo.descripcion = "";
+              this.articulo.precio = "";
+              this.articulo.stock = "";
+            })
+            .catch(error => {
+              // Manejo de errores...
+            });
+        },
+        editar: function () {
+          let parametros = { descripcion: this.articulo.descripcion, precio: this.articulo.precio, stock: this.articulo.stock, id: this.articulo.id };
+          //console.log(parametros);                   
+          axios.put(url + this.articulo.id, parametros)
+            .then(response => {
+              Swal.fire({
+                title: 'Éxito',
+                text: 'El artículo se ha actualizado exitosamente.',
+                icon: 'success',
+                timer: 2500,
+                //showConfirmButton: false,
+              });
+              this.mostrar();
+            })
+            .catch(error => {
+              console.log(error);
+            });
+        },
+        borrar: function (id) {
+          Swal.fire({
+            title: '¿Confirma eliminar el registro?',
+            confirmButtonText: `Confirmar`,
+            showCancelButton: true,
+          }).then((result) => {
+            if (result.isConfirmed) {
+              //procedimiento borrar
+              axios.delete(url + id)
+                .then(response => {
+                  this.mostrar();
+                  setTimeout(() => {
+                    Swal.close();
+                  }, 2500);
+                });
+              Swal.fire('¡Eliminado!', '', 'success')
+            } else if (result.isDenied) {
+            }
+          });
+        },
+
+        //Botones y formularios
+        guardar: function () {
+          //this.$refs.form.validate(valid => {
+          //if (valid) {  
+
+          if (this.operacion == 'crear') {
+            this.crear();
+          }
+          if (this.operacion == 'editar') {
+            this.editar();
+          }
+          this.dialog = false;
+          //}
+          //}
+          //});			  
+        },
+
+        mostrarDialogo: function (id = null, descripcion = '', precio = '', stock = '') {
+          this.dialog = true;
+          this.operacion = id ? 'editar' : 'crear';
+          this.articulo = {
+            id: id,
+            descripcion: descripcion,
+            precio: precio,
+            stock: stock
+          };
+
+        },
+      },
+
+      computed: {
+        dialogTitle() {
+          return this.operacion === 'editar' ? 'Editar Artículo' : 'Agregar Artículo';
+        },
+        startIndex() {
+          return (this.currentPage - 1) * this.itemsPerPage;
+        },
+        // Calcula el índice del último elemento en la página actual
+        endIndex() {
+          return this.currentPage * this.itemsPerPage - 1;
+        },
+        // Filtra los artículos para mostrar solo los de la página actual
+        paginatedArticulos() {
+          return this.articulos.slice(this.startIndex, this.endIndex + 1);
+        },
+        // Calcula el número total de páginas
+        totalPages() {
+          return Math.ceil(this.articulos.length / this.itemsPerPage);
+        },
+      },
+    });
+  </script>
+</body>
+
+</html>
