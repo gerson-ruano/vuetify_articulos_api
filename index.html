@@ -215,7 +215,27 @@
               this.articulo.stock = "";
             })
             .catch(error => {
-              // Manejo de errores...
+              if (error.response.status === 422) {
+                // La API ha devuelto errores de validación
+                const errors = error.response.data.errors;
+                let errorMessage = 'Hubo un error de validación:<br>';
+                for (const key in errors) {
+                  errorMessage += `- ${errors[key][0]}<br>`;
+                }
+                Swal.fire({
+                  title: 'Verifique los datos ingresados',
+                  html: errorMessage,
+                  icon: 'error'
+                });
+              } else {
+                // Otro tipo de error, puedes manejarlo según tus necesidades
+                console.error('Error en la creación del artículo:', error);
+                Swal.fire({
+                  title: 'Error',
+                  text: 'Hubo un error al intentar agregar el artículo. Por favor, inténtalo de nuevo más tarde.',
+                  icon: 'error'
+                });
+              }
             });
         },
         editar: function () {
@@ -233,7 +253,27 @@
               this.mostrar();
             })
             .catch(error => {
-              console.log(error);
+              if (error.response.status === 422) {
+                // La API ha devuelto errores de validación
+                const errors = error.response.data.errors;
+                let errorMessage = 'Hubo un error de validación:<br>';
+                for (const key in errors) {
+                  errorMessage += `- ${errors[key][0]}<br>`;
+                }
+                Swal.fire({
+                  title: 'Error de validación',
+                  html: errorMessage,
+                  icon: 'error'
+                });
+              } else {
+                // Otro tipo de error, puedes manejarlo según tus necesidades
+                console.error('Error en la edición del artículo:', error);
+                Swal.fire({
+                  title: 'Error',
+                  text: 'Hubo un error al intentar actualizar el artículo. Por favor, inténtalo de nuevo más tarde.',
+                  icon: 'error'
+                });
+              }
             });
         },
         borrar: function (id) {
@@ -274,7 +314,7 @@
           //});			  
         },
 
-        mostrarDialogo: function (id = null, descripcion = '', precio = '', stock = '') {
+        /*mostrarDialogo: function (id = null, descripcion = '', precio = '', stock = '') {
           this.dialog = true;
           this.operacion = id ? 'editar' : 'crear';
           this.articulo = {
@@ -284,7 +324,38 @@
             stock: stock
           };
 
+        },*/
+
+        mostrarDialogo: function (id = null, descripcion = '', precio = '', stock = '') {
+          this.dialog = true;
+          this.operacion = id ? 'editar' : 'crear';
+
+          if (this.operacion === 'crear') {
+            // Reiniciar campos y reglas de validación para agregar
+            this.articulo = {
+              id: null,
+              descripcion: '',
+              precio: '',
+              stock: ''
+            };
+            this.descripcionRules = [v => !!v || 'La descripción es requerida'];
+            this.precioRules = [v => !!v || 'El precio es requerido'];
+            this.stockRules = [
+              v => !!v || 'El stock es requerido',
+              v => (v === '' || parseFloat(v) >= 0) || 'El stock no puede ser negativo'
+            ];
+          } else {
+            // Para editar, establecer los valores proporcionados
+            this.articulo = {
+              id: id,
+              descripcion: descripcion,
+              precio: precio,
+              stock: stock
+            };
+            // Puedes mantener las reglas de validación actuales si no necesitas cambiarlas al editar
+          }
         },
+
       },
 
       computed: {
