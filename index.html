@@ -164,7 +164,10 @@
             stock: ''
           },
           descripcionRules: [v => !!v || 'La descripción es requerida'],
-          precioRules: [v => !!v || 'El precio es requerido'],
+          precioRules: [
+            v => !!v || 'El precio es requerido',
+            v => (v === '' || parseFloat(v) >= 0) || 'El Precio no puede ser negativo'
+            ],
           //stockRules: [v => !!v || 'El stock es requerido'],
           stockRules: [
             v => !!v || 'El stock es requerido',
